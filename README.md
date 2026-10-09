@@ -132,3 +132,9 @@ df = load_transactions(DATA_PATH)   # instead of pd.read_csv(DATA_PATH)
 | `POST /api/engine/score` | `{"row_id": n}` or `{"transaction": {...}}` → verdict, both parties' signals, ML slot |
 
 Interactive docs: http://localhost:8000/docs
+
+## License
+
+The code in this repository is released under the [MIT License](LICENSE).
+The PaySim dataset is not part of this repository. It is distributed
+separately on Kaggle under its own license terms.

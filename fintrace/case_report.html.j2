@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FinTrace Case Report — {{ account_id }}</title>
+<style>
+  :root {
+    --navy: #1E2761;
+    --navy-dark: #161C4A;
+    --ice: #CADCFC;
+    --gold: #D4AF37;
+    --slate: #4A5578;
+    --offwhite: #F7F8FC;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Calibri", "Segoe UI", Arial, sans-serif;
+    background: var(--offwhite);
+    color: var(--navy);
+    margin: 0;
+    padding: 0;
+  }
+  .header {
+    background: var(--navy-dark);
+    color: white;
+    padding: 36px 48px;
+  }
+  .header .eyebrow {
+    color: var(--gold);
+    letter-spacing: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  .header h1 {
+    font-family: Cambria, Georgia, serif;
+    font-size: 34px;
+    margin: 8px 0 4px 0;
+  }
+  .header .meta {
+    color: var(--ice);
+    font-size: 14px;
+  }
+  .risk-band {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 13px;
+  }
+  .risk-Low { background: #3a4a2f; color: #b7e39a; }
+  .risk-Medium { background: #4a3f1f; color: var(--gold); }
+  .risk-High { background: #4a241f; color: #f2a679; }
+  .risk-Critical { background: #5a1f24; color: #ff9d9d; }
+
+  .content { padding: 32px 48px; max-width: 900px; margin: 0 auto; }
+  .card {
+    background: white;
+    border: 1px solid var(--ice);
+    border-radius: 10px;
+    padding: 22px 26px;
+    margin-bottom: 22px;
+    box-shadow: 0 3px 10px rgba(30, 39, 97, 0.08);
+  }
+  .card h2 {
+    font-family: Cambria, Georgia, serif;
+    font-size: 19px;
+    margin: 0 0 14px 0;
+    color: var(--navy);
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 8px;
+    display: inline-block;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 6px;
+  }
+  .stat { background: var(--offwhite); border-radius: 8px; padding: 12px 14px; }
+  .stat .label { font-size: 11px; color: var(--slate); text-transform: uppercase; letter-spacing: 1px;}
+  .stat .value { font-size: 20px; font-weight: bold; color: var(--navy); margin-top: 4px;}
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; color: var(--slate); font-size: 11px; text-transform: uppercase;
+       letter-spacing: 0.5px; padding: 6px 8px; border-bottom: 2px solid var(--ice); }
+  td { padding: 8px; border-bottom: 1px solid var(--offwhite); vertical-align: top; }
+  tr.flagged { background: #fff6ea; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+  .badge-out { background: #eef1fb; color: var(--navy); }
+  .badge-in { background: #e9f7ef; color: #1e6b3e; }
+
+  .signal { padding: 10px 0; border-bottom: 1px solid var(--offwhite); }
+  .signal:last-child { border-bottom: none; }
+  .signal .bar-bg { background: var(--offwhite); border-radius: 6px; height: 8px; margin-top: 6px; overflow: hidden; }
+  .signal .bar-fill { background: var(--gold); height: 100%; }
+  .signal .detail { font-size: 13.5px; color: var(--slate); margin-top: 4px; }
+
+  .neighbor-list span { display: inline-block; background: var(--offwhite); color: var(--navy);
+    border: 1px solid var(--ice); border-radius: 14px; padding: 4px 12px; margin: 3px 4px 3px 0; font-size: 12.5px;}
+
+  .footer { text-align: center; color: var(--slate); font-size: 11.5px; padding: 24px; }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="eyebrow">FinTrace &middot; Case Report</div>
+    <h1>Account {{ account_id }}</h1>
+    <div class="meta">Generated {{ generated_at }} &middot; {{ total_transactions }} transactions on record</div>
+    <div class="risk-band risk-{{ risk_band }}">{{ risk_band|upper }} RISK &middot; SCORE {{ risk_score }}/100</div>
+  </div>
+
+  <div class="content">
+
+    <div class="card">
+      <h2>Account Summary</h2>
+      <div class="stat-grid">
+        <div class="stat"><div class="label">Total Sent</div><div class="value">{{ total_sent }}</div></div>
+        <div class="stat"><div class="label">Total Received</div><div class="value">{{ total_received }}</div></div>
+        <div class="stat"><div class="label">Counterparties</div><div class="value">{{ counterparty_count }}</div></div>
+        <div class="stat"><div class="label">Fraud-Labeled Txns</div><div class="value">{{ fraud_count }}</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Why This Account Was Flagged</h2>
+      {% if signals %}
+        {% for s in signals %}
+        <div class="signal">
+          <strong>{{ s.feature.replace('_',' ')|title }}</strong> &mdash; weight {{ s.weight|round(1) }}
+          <div class="bar-bg"><div class="bar-fill" style="width: {{ (s.weight / 40 * 100) | round(0) }}%;"></div></div>
+          <div class="detail">{{ s.detail }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p>No significant anomaly signals detected for this account.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Network Neighborhood</h2>
+      <p style="color: var(--slate); font-size: 13.5px; margin-top: -6px;">
+        Directly connected accounts (1-hop neighborhood in the entity graph){% if community_id is not none %}, community #{{ community_id }}{% endif %}.
+      </p>
+      <div class="neighbor-list">
+        {% for n in neighbors %}<span>{{ n }}</span>{% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Activity Timeline</h2>
+      <table>
+        <tr>
+          <th>Time (step)</th><th>Direction</th><th>Counterparty</th>
+          <th>Amount</th><th>Balance After</th><th>Z-score</th><th>Notes</th>
+        </tr>
+        {% for e in timeline_events %}
+        <tr class="{{ 'flagged' if e.is_flagged_moment else '' }}">
+          <td>{{ e.step }}</td>
+          <td><span class="badge {{ 'badge-out' if e.direction == 'outgoing' else 'badge-in' }}">{{ e.direction }}</span></td>
+          <td>{{ e.counterparty }}</td>
+          <td>{{ "%.2f"|format(e.amount) }}</td>
+          <td>{{ "%.2f"|format(e.balance_after) }}</td>
+          <td>{{ "%.2f"|format(e.z_score) }}</td>
+          <td>{{ e.flag_reasons|join(' ') if e.flag_reasons else '' }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+  </div>
+
+  <div class="footer">FinTrace &middot; Forensic Transaction Analytics Platform &middot; Generated automatically from PaySim transaction data</div>
+
+</body>
+</html>

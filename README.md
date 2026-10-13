@@ -17,6 +17,9 @@ backend/app.py (FastAPI)  /api/*  ──►  frontend/ (HTML + JS, no CDN; works
 backend/model_slot.py     optional ML model: models/model.joblib + models/metrics.json
 ```
 
+For a full walkthrough of the pipeline, the scoring rules with worked examples,
+the API and the evaluation, see **[docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md)**.
+
 ## Run it
 
 ```bash

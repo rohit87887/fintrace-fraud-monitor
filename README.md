@@ -26,6 +26,9 @@ The dataset (470 MB) is not included in this repository. Download it from Kaggle
 **Project report:** [report/FinTrace_Project_Report.html](report/FinTrace_Project_Report.html)
 (download the file and open it in a browser; it is self-contained and works offline).
 
+**Presentation:** [report/FinTrace_Presentation.pptx](report/FinTrace_Presentation.pptx)
+(15 slides with speaker notes; charts are native and editable in PowerPoint).
+
 ```
 PaySim CSV ──► scripts/build_data.py ──► data/fintrace.duckdb + data/stats.json
                      │ (notebook rules for all 9.07M accounts, in SQL)

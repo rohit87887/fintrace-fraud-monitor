@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinTrace Fraud Monitor — Project Report (CSE4074)</title>
+<meta name="description" content="CSE4074 project report: FinTrace Fraud Monitor, a fraud monitoring system on the PaySim dataset.">
+<style>
+:root { --ink: #1b1b1b; --quiet: #5f5e5a; --line: #e2e1db; --soft: #f6f6f3; --navy: #1E2761; --gold: #B8922B; --good: #e5f4e4; --bad: #fbebeb; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: #fff; color: var(--ink); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 860px; margin: 0 auto; padding: 48px 24px 80px; }
+.cover { border-bottom: 3px solid var(--navy); padding-bottom: 20px; margin-bottom: 24px; }
+.eyebrow { color: var(--gold); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; }
+h1 { font-size: 36px; line-height: 1.15; margin: 6px 0 6px; color: var(--navy); }
+.sub { margin: 0; color: var(--quiet); font-size: 18px; }
+.date { margin: 8px 0 0; color: var(--quiet); font-size: 14px; }
+.lead { font-size: 18px; }
+h2 { font-size: 24px; color: var(--navy); margin: 44px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+a { color: #2a5fb0; }
+code { font-family: ui-monospace, Consolas, monospace; font-size: 0.88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; word-break: break-word; }
+.tw { overflow-x: auto; margin: 12px 0 20px; }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { background: var(--soft); font-weight: 600; font-size: 13.5px; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.total td { font-weight: 700; border-top: 2px solid var(--ink); }
+.toc { background: var(--soft); border-radius: 10px; padding: 14px 20px; margin: 24px 0; }
+.toc ul { margin: 6px 0 0; padding: 0; list-style: none; columns: 2; column-gap: 32px; }
+.toc li { margin: 2px 0; }
+.formula { font-family: "Cambria Math", Cambria, Georgia, serif; font-size: 18px; text-align: center; margin: 12px 0; padding: 10px; background: var(--soft); border-radius: 8px; }
+figure { margin: 20px 0; }
+figure svg { width: 100%; height: auto; display: block; }
+figcaption { color: var(--quiet); font-size: 13px; margin-top: 6px; }
+.cms { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+table.cm td { text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+table.cm td small { font-weight: 400; color: var(--quiet); }
+table.cm td.ok { background: var(--good); }
+table.cm td.bad { background: var(--bad); }
+table.cm tbody th { background: var(--soft); font-size: 13.5px; }
+.refs li { margin: 6px 0; }
+footer { margin-top: 48px; color: var(--quiet); font-size: 13px; border-top: 1px solid var(--line); padding-top: 12px; }
+@media (max-width: 640px) {
+  main { padding: 28px 16px 60px; }
+  h1 { font-size: 28px; }
+  .toc ul { columns: 1; }
+  .cms { grid-template-columns: 1fr; }
+}
+@media print {
+  main { max-width: none; padding: 0; }
+  h2 { break-after: avoid; }
+  figure, table, .cms > div { break-inside: avoid; }
+  a { color: inherit; text-decoration: none; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<header class="cover">
+  <div class="eyebrow">CSE4074 · Project Report</div>
+  <h1>FinTrace Fraud Monitor</h1>
+  <p class="sub">A fraud monitoring system built on the PaySim dataset and the FinTrace analysis notebook</p>
+  <p class="date">31 October 2026</p>
+</header>
+
+<p class="lead">FinTrace Fraud Monitor applies the FinTrace notebook's explainable fraud-scoring rules to all 6,362,620 PaySim transactions and presents the results in a seven-page web application. The rules raise 1,154 alerts but catch only 5 of 8,213 labeled frauds at the High threshold. This shows that per-account anomaly rules are better suited to explaining cases than to classifying transactions.</p>
+
+<nav class="toc"><strong>Contents</strong><ul>
+<li><a href="#course">Course and team</a></li><li><a href="#abstract">Abstract</a></li>
+<li><a href="#s1">1. Introduction</a></li><li><a href="#s2">2. Dataset</a></li><li><a href="#s3">3. System architecture</a></li>
+<li><a href="#s4">4. Methodology: the FinTrace risk score</a></li><li><a href="#s5">5. Implementation</a></li>
+<li><a href="#s6">6. Exploratory findings</a></li><li><a href="#s7">7. Evaluation</a></li>
+<li><a href="#s8">8. Discussion and limitations</a></li><li><a href="#s9">9. Conclusion and future work</a></li><li><a href="#refs">References</a></li>
+</ul></nav>
+
+<h2 id="course">Course and team</h2>
+<div class="tw"><table><thead><tr><th>Item</th><th>Detail</th></tr></thead><tbody>
+<tr><td>Subject code</td><td>CSE4074</td></tr>
+<tr><td>Semester</td><td>Fall 2026-27</td></tr>
+<tr><td>Professor</td><td>Dr. S. Johanan Joysingh</td></tr>
+<tr><td>Repository</td><td><a href="https://github.com/rohit87887/fintrace-fraud-monitor">github.com/rohit87887/fintrace-fraud-monitor</a></td></tr>
+</tbody></table></div>
+<div class="tw"><table><thead><tr><th>Team member</th><th>Register no.</th></tr></thead><tbody>
+<tr><td>S Rohit</td><td>23MIA1175</td></tr>
+<tr><td>Mridula S</td><td>23MIA1004</td></tr>
+<tr><td>Fedrick Engels</td><td>23MIA1082</td></tr>
+</tbody></table></div>
+
+<h2 id="abstract">Abstract</h2>
+<p>Mobile-money fraud is rare, so it is easy to miss in millions of ordinary transactions. This project builds FinTrace Fraud Monitor, a web-based fraud monitoring system over the PaySim dataset of 6,362,620 simulated mobile-money transactions, of which 8,213 (0.129%) are labeled fraud.</p>
+<p>The system turns the team's FinTrace analysis notebook into a working application. A build step loads the full dataset into DuckDB and applies the notebook's explainable risk score to all 9,073,900 accounts in about two minutes. A FastAPI backend then serves seven pages: a dashboard, a transaction explorer, a detection engine, risk analysis, fraud analytics, alerts and reports, and model performance.</p>
+<p>Evaluated against the dataset's fraud labels, the rule-based score flags 1,138 transactions at the High threshold (score of 50 or more) and catches 5 frauds: precision 0.44% and recall 0.06%. PaySim's own built-in flag is perfectly precise but catches only 16 frauds (recall 0.19%). Exploratory analysis found a much stronger signal that neither detector uses: every TRANSFER or CASH_OUT that moves the sender's entire balance (8,018 of 8,018) is fraud. No machine-learning model was part of the project notebook, so none is reported. The backend includes a slot for one.</p>
+
+<h2 id="s1">1. Introduction</h2>
+<p>A fraud analyst needs to answer three questions about a suspicious account: who was involved, when its behaviour changed, and why it was flagged. The FinTrace notebook answers these with account-level analysis. It looks at each account's own history, scores how unusual it is, and explains the score in plain language. But a notebook is hard to demonstrate, and it cannot be searched or explored by someone who does not run the code.</p>
+<p><strong>Problem statement.</strong> Build a fraud monitoring system that runs the project's real scoring logic on the real dataset. It must present the results in a form an analyst can use, and it must not present simulated or invented results as model output.</p>
+<p><strong>Objectives</strong></p>
+<ol>
+<li>Load and index all 6.36 million PaySim transactions so any transaction or account can be found in under a second.</li>
+<li>Apply the notebook's explainable risk score to every account and transaction, and verify it matches the notebook's own code.</li>
+<li>Provide seven pages: dashboard, transaction explorer, detection engine, risk analysis, fraud analytics, alerts and reports, and model performance.</li>
+<li>Show a 0–100 risk score with Low, Medium and High bands, plus the signals behind each score.</li>
+<li>Measure accuracy, precision, recall, F1 and the confusion matrix against the dataset's fraud labels.</li>
+<li>Mark every number as dataset fact, rule-based output, or unavailable, and leave a ready API slot for a future machine-learning model.</li>
+</ol>
+
+<h2 id="s2">2. Dataset</h2>
+<p>The project uses PaySim, a public synthetic dataset that simulates one month of mobile-money transactions (<a href="https://www.kaggle.com/datasets/ealaxi/paysim1">Kaggle</a>). The file <code>PS_20174392719_1491204439457_log.csv</code> is 470 MB and has 6,362,620 rows. Each row is one transaction, and each time step is one simulated hour.</p>
+<div class="tw"><table><thead><tr><th>Column</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>step</td><td>Hour of the simulation, 1 to 743 (31 days)</td></tr>
+<tr><td>type</td><td>CASH_IN, CASH_OUT, DEBIT, PAYMENT or TRANSFER</td></tr>
+<tr><td>amount</td><td>Transaction amount (no currency stated)</td></tr>
+<tr><td>nameOrig, nameDest</td><td>Sender and receiver account IDs (C = customer, M = merchant)</td></tr>
+<tr><td>oldbalanceOrg, newbalanceOrig</td><td>Sender's balance before and after</td></tr>
+<tr><td>oldbalanceDest, newbalanceDest</td><td>Receiver's balance before and after</td></tr>
+<tr><td>isFraud</td><td>Ground-truth label: 1 = fraudulent</td></tr>
+<tr><td>isFlaggedFraud</td><td>PaySim's own built-in flag, documented as marking transfers over 200,000</td></tr>
+</tbody></table></div>
+<p><strong>Size and imbalance</strong></p>
+<div class="tw"><table><thead><tr><th>Measure</th><th class="num">Value</th></tr></thead><tbody>
+<tr><td>Transactions</td><td class="num">6,362,620</td></tr>
+<tr><td>Labeled fraud</td><td class="num">8,213 (0.129%)</td></tr>
+<tr><td>Labeled fraud amount</td><td class="num">12.06 billion</td></tr>
+<tr><td>Distinct accounts</td><td class="num">9,073,900</td></tr>
+<tr><td>Accounts in only one transaction</td><td class="num">8,604,623 (94.8%)</td></tr>
+<tr><td>Transactions flagged by PaySim</td><td class="num">16</td></tr>
+</tbody></table></div>
+<p>Two properties shape everything that follows. Fraud is extremely rare, so accuracy alone is a misleading measure. And almost every account appears only once, which leaves little history for per-account analysis.</p>
+
+<h2 id="s3">3. System architecture</h2>
+<p>The heavy computation runs once, offline, so that every page can answer in under half a second.</p>
+<figure><svg viewBox="0 0 760 600" role="img" aria-label="System architecture" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="11.5">
+<defs><marker id="arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#b8b7ae"/></marker></defs>
+<text x="24" y="32" font-size="15" font-weight="600" fill="#1b1b1b">One build step feeds a live API that runs the notebook's own rules</text>
+<g fill="none" stroke="#b8b7ae" stroke-width="1.25"><path d="M184 128V168" marker-end="url(#arch-arrow)"/><path d="M564 128V168" marker-end="url(#arch-arrow)"/><path d="M416 212H344" marker-end="url(#arch-arrow)"/><path d="M184 256V296" marker-end="url(#arch-arrow)"/><path d="M184 384V424" marker-end="url(#arch-arrow)"/><path d="M712 212H736V452H712" marker-end="url(#arch-arrow)"/><path d="M368 480V520" marker-end="url(#arch-arrow)"/><path d="M564 384V424" stroke-dasharray="5 4" marker-end="url(#arch-arrow)"/></g>
+<text x="380" y="204" text-anchor="middle" font-size="10.5" fill="#5f5e5a">reference</text>
+<rect x="24" y="56" width="320" height="72" rx="8" fill="none" stroke="#b8b7ae" stroke-width="1.25"/><text x="40" y="80" font-size="13" font-weight="600" fill="#1b1b1b">PaySim CSV</text><text x="40" y="100" fill="#5f5e5a">6,362,620 transactions · 470 MB</text><text x="40" y="116" fill="#5f5e5a">Synthetic mobile-money log (Kaggle)</text>
+<rect x="416" y="56" width="296" height="72" rx="8" fill="none" stroke="#b8b7ae" stroke-width="1.25"/><text x="432" y="80" font-size="13" font-weight="600" fill="#1b1b1b">FinTrace notebook</text><text x="432" y="100" fill="#5f5e5a">Analysis notebook, sections 2–6:</text><text x="432" y="116" fill="#5f5e5a">scoring, timeline, graph, case report</text>
+<rect x="24" y="168" width="320" height="88" rx="8" fill="none" stroke="#b8b7ae" stroke-width="1.25"/><text x="40" y="192" font-size="13" font-weight="600" fill="#1b1b1b">Build pipeline · build_data.py</text><text x="40" y="212" fill="#5f5e5a">Runs once, about 2 minutes</text><text x="40" y="228" fill="#5f5e5a">Scores all 9.07M accounts in SQL</text><text x="40" y="244" fill="#5f5e5a">Checked vs notebook: 0 mismatches</text>
+<rect x="416" y="168" width="296" height="88" rx="8" fill="#2a78d6" fill-opacity="0.12" stroke="#2a78d6" stroke-width="2"/><text x="432" y="192" font-size="13" font-weight="600" fill="#1b1b1b">Notebook rules · fintrace/core.py</text><text x="432" y="212" fill="#1b1b1b">Sections 2–6 ported unchanged</text><text x="432" y="228" fill="#1b1b1b">Runs live for one account or</text><text x="432" y="244" fill="#1b1b1b">transaction at a time</text>
+<rect x="24" y="296" width="320" height="88" rx="8" fill="none" stroke="#b8b7ae" stroke-width="1.25"/><text x="40" y="320" font-size="13" font-weight="600" fill="#1b1b1b">Data store · data/</text><text x="40" y="340" fill="#5f5e5a">fintrace.duckdb: 6.36M transactions</text><text x="40" y="356" fill="#5f5e5a">and 9.07M account scores</text><text x="40" y="372" fill="#5f5e5a">stats.json: chart data and metrics</text>
+<rect x="416" y="296" width="296" height="88" rx="8" fill="none" stroke="#b8b7ae" stroke-width="1.25" stroke-dasharray="5 4"/><text x="432" y="320" font-size="13" font-weight="600" fill="#1b1b1b">ML model slot (optional)</text><text x="432" y="340" fill="#5f5e5a">models/model.joblib + metrics.json</text><text x="432" y="356" fill="#5f5e5a">Not connected: the notebook</text><text x="432" y="372" fill="#5f5e5a">has no trained model</text>
+<rect x="24" y="424" width="688" height="56" rx="8" fill="none" stroke="#b8b7ae" stroke-width="1.25"/><text x="40" y="448" font-size="13" font-weight="600" fill="#1b1b1b">FastAPI backend · /api/*</text><text x="40" y="468" fill="#5f5e5a">SQL search, filters and CSV exports · live notebook scoring per request · about 0.3 s per page</text>
+<rect x="24" y="520" width="688" height="56" rx="8" fill="none" stroke="#b8b7ae" stroke-width="1.25"/><text x="40" y="544" font-size="13" font-weight="600" fill="#1b1b1b">Web front end · 7 pages, works offline</text><text x="40" y="564" fill="#5f5e5a">Dashboard · Explorer · Detection Engine · Risk Analysis · Analytics · Alerts and Reports · Model Performance</text>
+</svg><figcaption>Figure 1. System architecture: build, store, API, front end</figcaption></figure>
+<p>The build pipeline scores every account in SQL and checks the result against the notebook's Python code. The API then combines fast SQL lookups with the notebook's own functions, run live for whichever account or transaction the user opens.</p>
+
+<h2 id="s4">4. Methodology: the FinTrace risk score</h2>
+<p>Each account receives a score from 0 to 100. The score is the sum of four signals, each measuring how unusual the account is compared with its own history, and the total is capped at 100. The rules come from section 5 (Explainability) of the FinTrace notebook.</p>
+<div class="tw"><table><thead><tr><th>#</th><th>Signal</th><th>What it measures</th><th>Weight</th><th class="num">Max</th></tr></thead><tbody>
+<tr><td>1</td><td>Amount z-score</td><td>Share of the account's transactions more than 2.5 standard deviations from its own mean</td><td>share × 100</td><td class="num">40</td></tr>
+<tr><td>2</td><td>IQR outliers</td><td>Share of amounts outside Q1 − 1.5·IQR and Q3 + 1.5·IQR (accounts with 4 or more transactions)</td><td>share × 60</td><td class="num">25</td></tr>
+<tr><td>3</td><td>Counterparty novelty</td><td>Share of the last 5 transactions with a never-seen counterparty, counted only if 40% or more</td><td>share × 30</td><td class="num">20</td></tr>
+<tr><td>4</td><td>Labeled fraud</td><td>Number of the account's transactions already labeled fraud</td><td>count × 15</td><td class="num">35</td></tr>
+</tbody></table></div>
+<div class="formula">account score = min(100, w<sub>z</sub> + w<sub>IQR</sub> + w<sub>novelty</sub> + w<sub>labels</sub>)</div>
+<div class="formula">transaction risk = max(score<sub>sender</sub>, score<sub>receiver</sub>)</div>
+<p><strong>Avoiding label leakage.</strong> Signal 4 reads the fraud labels directly. A detector that uses the labels it is then tested against would look accurate without proving anything. The system therefore keeps two scores:</p>
+<ul>
+<li><strong>Behavioral score</strong> (signals 1–3): used for every verdict, alert, risk band and evaluation metric.</li>
+<li><strong>Investigative score</strong> (signals 1–4): the notebook's default, shown alongside it for case investigation.</li>
+</ul>
+<p><strong>Risk bands.</strong> Low is below 25, Medium is 25 to 49.9, and High is 50 or above. A High transaction is classified as potentially fraudulent and raises an alert. The notebook's fourth band, Critical (75 or above), is folded into High.</p>
+<p><strong>Worked example.</strong> Account C760302409 received 9 transactions between steps 18 and 565. Their amounts range from 16,629.95 to 1,767,961.22.</p>
+<div class="tw"><table><thead><tr><th>Signal</th><th>Calculation</th><th class="num">Weight</th></tr></thead><tbody>
+<tr><td>Amount z-score</td><td>1 of 9 amounts (1,767,961.22) is beyond 2.5 standard deviations: 11.1% × 100</td><td class="num">+11.1</td></tr>
+<tr><td>IQR outliers</td><td>4 of 9 amounts fall outside the fences (Q1 = 171,913, Q3 = 250,572): 44.4% × 60 = 26.7, capped</td><td class="num">+25.0</td></tr>
+<tr><td>Counterparty novelty</td><td>All of the last 5 senders were new: 100% × 30 = 30, capped</td><td class="num">+20.0</td></tr>
+<tr><td>Labeled fraud</td><td>None</td><td class="num">+0</td></tr>
+<tr class="total"><td>Total</td><td></td><td class="num">56.1 (High)</td></tr>
+</tbody></table></div>
+<p>All 9 of these transactions are labeled legitimate, so the alerts they raise are false positives. In contrast, account C1305486145 sent the fraudulent transaction TXN00000002. It has a single transaction, so only the novelty signal fires and it scores 20.0 (Low). Most PaySim accounts look like this second case: one transaction and a score of exactly 20.</p>
+<p><strong>Verification.</strong> The scores for all 9.07 million accounts are computed in SQL for speed. The build re-scores 180 random accounts with the notebook's original Python function and compares the two. The result on the full dataset was 0 mismatches.</p>
+
+<h2 id="s5">5. Implementation</h2>
+<p>The system is written in Python and plain JavaScript, with no front-end framework and no CDN, so the demo runs offline. A full build of the data store takes 109 seconds. Every page then loads in roughly 0.2 to 0.3 seconds.</p>
+<div class="tw"><table><thead><tr><th>Layer</th><th>Technology</th><th>Role</th></tr></thead><tbody>
+<tr><td>Data store</td><td>DuckDB (embedded SQL database)</td><td>Holds all transactions and account scores, indexed by account</td></tr>
+<tr><td>Analysis logic</td><td>Python, pandas, NetworkX, Jinja2</td><td>The notebook's sections 2–6, ported unchanged into <code>fintrace/core.py</code></td></tr>
+<tr><td>Build pipeline</td><td><code>scripts/build_data.py</code></td><td>Loads the CSV, scores every account, verifies, writes aggregates</td></tr>
+<tr><td>API</td><td>FastAPI + Uvicorn</td><td>JSON, CSV and HTML endpoints; also serves the web pages</td></tr>
+<tr><td>Front end</td><td>HTML, CSS, JavaScript, hand-written SVG charts</td><td>Seven pages with light and dark themes</td></tr>
+<tr><td>ML slot</td><td><code>backend/model_slot.py</code></td><td>Loads an optional scikit-learn model; reports "not connected" when none exists</td></tr>
+</tbody></table></div>
+<p><strong>Key API endpoints</strong></p>
+<div class="tw"><table><thead><tr><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>GET /api/transactions</code></td><td>Search, filter, sort and page through all transactions</td></tr>
+<tr><td><code>GET /api/transactions/export</code></td><td>The same filters, downloaded as CSV</td></tr>
+<tr><td><code>GET /api/accounts/{id}</code></td><td>Live notebook score, signals, timeline and neighbouring accounts</td></tr>
+<tr><td><code>GET /api/accounts/{id}/report</code></td><td>The notebook's HTML case report for an account</td></tr>
+<tr><td><code>POST /api/engine/score</code></td><td>Classify an existing or hypothetical transaction</td></tr>
+<tr><td><code>GET /api/stats</code></td><td>Pre-computed aggregates and evaluation results</td></tr>
+</tbody></table></div>
+<p><strong>The seven pages</strong></p>
+<div class="tw"><table><thead><tr><th>Page</th><th>What the user can do</th></tr></thead><tbody>
+<tr><td>Dashboard</td><td>See total transactions, labeled fraud, fraud rate, suspicious count and fraud amount</td></tr>
+<tr><td>Transaction Explorer</td><td>Search and filter 6.36M transactions by amount, time, type, risk band and fraud status; export CSV</td></tr>
+<tr><td>Detection Engine</td><td>Classify a transaction as legitimate or potentially fraudulent and compare with its true label</td></tr>
+<tr><td>Risk Analysis</td><td>Look up any account's 0–100 score, the signals behind it, its timeline and its connected accounts</td></tr>
+<tr><td>Fraud Analytics</td><td>Charts of fraud by type, hour, day, amount and balance behaviour</td></tr>
+<tr><td>Alerts &amp; Reports</td><td>Review the alert queue; export CSV reports, case reports and a printable summary</td></tr>
+<tr><td>Model Performance</td><td>Accuracy, precision, recall, F1 and confusion matrices, with an adjustable threshold</td></tr>
+</tbody></table></div>
+<p><strong>Keeping results honest.</strong> Each page carries labels that say where its numbers come from: real data, rule-based engine, or ML model not connected. Dashboard tiles carry a Dataset, Label or Rules badge. Wherever an ML result would appear, the page states that no model is connected instead of showing a placeholder number.</p>
+
+<h2 id="s6">6. Exploratory findings</h2>
+<p>Fraud appears in only two transaction types, it is spread evenly over the clock, and it follows one balance pattern almost without exception.</p>
+<div class="tw"><table><thead><tr><th>Type</th><th class="num">Transactions</th><th class="num">Labeled fraud</th><th class="num">Fraud rate</th></tr></thead><tbody>
+<tr><td>TRANSFER</td><td class="num">532,909</td><td class="num">4,097</td><td class="num">0.769%</td></tr>
+<tr><td>CASH_OUT</td><td class="num">2,237,500</td><td class="num">4,116</td><td class="num">0.184%</td></tr>
+<tr><td>PAYMENT</td><td class="num">2,151,495</td><td class="num">0</td><td class="num">0%</td></tr>
+<tr><td>CASH_IN</td><td class="num">1,399,284</td><td class="num">0</td><td class="num">0%</td></tr>
+<tr><td>DEBIT</td><td class="num">41,432</td><td class="num">0</td><td class="num">0%</td></tr>
+</tbody></table></div>
+<figure><svg viewBox="0 0 760 350" role="img" aria-label="Fraud rate by hour of day" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="11.5">
+<text x="24" y="30" font-size="15" font-weight="600" fill="#1b1b1b">Fraud rate peaks at 22.3% at 05:00, when legitimate traffic nearly stops</text>
+<text x="24" y="52" fill="#5f5e5a">Labeled fraud stays between 274 and 375 an hour; all transactions range from 1,241 to 647,814 an hour</text>
+<line x1="64" x2="736" y1="300.0" y2="300.0" stroke="#b8b7ae"/><text x="56" y="304.0" text-anchor="end" fill="#5f5e5a">0%</text><line x1="64" x2="736" y1="259.2" y2="259.2" stroke="#e6e5df"/><text x="56" y="263.2" text-anchor="end" fill="#5f5e5a">5%</text><line x1="64" x2="736" y1="218.4" y2="218.4" stroke="#e6e5df"/><text x="56" y="222.4" text-anchor="end" fill="#5f5e5a">10%</text><line x1="64" x2="736" y1="177.6" y2="177.6" stroke="#e6e5df"/><text x="56" y="181.6" text-anchor="end" fill="#5f5e5a">15%</text><line x1="64" x2="736" y1="136.8" y2="136.8" stroke="#e6e5df"/><text x="56" y="140.8" text-anchor="end" fill="#5f5e5a">20%</text><line x1="64" x2="736" y1="96.0" y2="96.0" stroke="#e6e5df"/><text x="56" y="100.0" text-anchor="end" fill="#5f5e5a">25%</text><rect x="69.0" y="296.6" width="18" height="3.4" fill="#c3c2b7"><title>00:00: 0.4% fraud (300 of 71,587 transactions)</title></rect><text x="78.0" y="316" text-anchor="middle" fill="#5f5e5a">00</text><rect x="97.0" y="289.2" width="18" height="10.8" fill="#c3c2b7"><title>01:00: 1.3% fraud (358 of 27,111 transactions)</title></rect><text x="106.0" y="316" text-anchor="middle" fill="#5f5e5a">01</text><rect x="125.0" y="266.3" width="18" height="33.7" fill="#c3c2b7"><title>02:00: 4.1% fraud (372 of 9,018 transactions)</title></rect><text x="134.0" y="316" text-anchor="middle" fill="#5f5e5a">02</text><rect x="153.0" y="167.5" width="18" height="132.5" fill="#c3c2b7"><title>03:00: 16.2% fraud (326 of 2,007 transactions)</title></rect><text x="162.0" y="316" text-anchor="middle" fill="#5f5e5a">03</text><rect x="181.0" y="119.8" width="18" height="180.2" fill="#c3c2b7"><title>04:00: 22.1% fraud (274 of 1,241 transactions)</title></rect><text x="190.0" y="316" text-anchor="middle" fill="#5f5e5a">04</text><rect x="209.0" y="118.0" width="18" height="182.0" fill="#2a78d6"><title>05:00: 22.3% fraud (366 of 1,641 transactions)</title></rect><text x="218.0" y="316" text-anchor="middle" fill="#5f5e5a">05</text><rect x="237.0" y="214.6" width="18" height="85.4" fill="#c3c2b7"><title>06:00: 10.5% fraud (358 of 3,420 transactions)</title></rect><text x="246.0" y="316" text-anchor="middle" fill="#5f5e5a">06</text><rect x="265.0" y="270.2" width="18" height="29.8" fill="#c3c2b7"><title>07:00: 3.6% fraud (328 of 8,988 transactions)</title></rect><text x="274.0" y="316" text-anchor="middle" fill="#5f5e5a">07</text><rect x="293.0" y="288.8" width="18" height="11.2" fill="#c3c2b7"><title>08:00: 1.4% fraud (368 of 26,915 transactions)</title></rect><text x="302.0" y="316" text-anchor="middle" fill="#5f5e5a">08</text><rect x="321.0" y="299.0" width="18" height="1.0" fill="#c3c2b7"><title>09:00: 0.1% fraud (341 of 283,518 transactions)</title></rect><text x="330.0" y="316" text-anchor="middle" fill="#5f5e5a">09</text><rect x="349.0" y="299.3" width="18" height="0.7" fill="#c3c2b7"><title>10:00: 0.1% fraud (375 of 425,729 transactions)</title></rect><text x="358.0" y="316" text-anchor="middle" fill="#5f5e5a">10</text><rect x="377.0" y="299.4" width="18" height="0.6" fill="#c3c2b7"><title>11:00: 0.1% fraud (324 of 445,992 transactions)</title></rect><text x="386.0" y="316" text-anchor="middle" fill="#5f5e5a">11</text><rect x="405.0" y="299.4" width="18" height="0.6" fill="#c3c2b7"><title>12:00: 0.1% fraud (339 of 483,418 transactions)</title></rect><text x="414.0" y="316" text-anchor="middle" fill="#5f5e5a">12</text><rect x="433.0" y="299.4" width="18" height="0.6" fill="#c3c2b7"><title>13:00: 0.1% fraud (346 of 468,474 transactions)</title></rect><text x="442.0" y="316" text-anchor="middle" fill="#5f5e5a">13</text><rect x="461.0" y="299.3" width="18" height="0.7" fill="#c3c2b7"><title>14:00: 0.1% fraud (353 of 439,653 transactions)</title></rect><text x="470.0" y="316" text-anchor="middle" fill="#5f5e5a">14</text><rect x="489.0" y="299.3" width="18" height="0.7" fill="#c3c2b7"><title>15:00: 0.1% fraud (341 of 416,686 transactions)</title></rect><text x="498.0" y="316" text-anchor="middle" fill="#5f5e5a">15</text><rect x="517.0" y="299.4" width="18" height="0.6" fill="#c3c2b7"><title>16:00: 0.1% fraud (345 of 441,612 transactions)</title></rect><text x="526.0" y="316" text-anchor="middle" fill="#5f5e5a">16</text><rect x="545.0" y="299.3" width="18" height="0.7" fill="#c3c2b7"><title>17:00: 0.1% fraud (353 of 439,941 transactions)</title></rect><text x="554.0" y="316" text-anchor="middle" fill="#5f5e5a">17</text><rect x="573.0" y="299.5" width="18" height="0.5" fill="#c3c2b7"><title>18:00: 0.1% fraud (343 of 580,509 transactions)</title></rect><text x="582.0" y="316" text-anchor="middle" fill="#5f5e5a">18</text><rect x="601.0" y="299.6" width="18" height="0.4" fill="#c3c2b7"><title>19:00: 0.1% fraud (342 of 647,814 transactions)</title></rect><text x="610.0" y="316" text-anchor="middle" fill="#5f5e5a">19</text><rect x="629.0" y="299.5" width="18" height="0.5" fill="#c3c2b7"><title>20:00: 0.1% fraud (340 of 553,728 transactions)</title></rect><text x="638.0" y="316" text-anchor="middle" fill="#5f5e5a">20</text><rect x="657.0" y="298.9" width="18" height="1.1" fill="#c3c2b7"><title>21:00: 0.1% fraud (347 of 247,806 transactions)</title></rect><text x="666.0" y="316" text-anchor="middle" fill="#5f5e5a">21</text><rect x="685.0" y="298.5" width="18" height="1.5" fill="#c3c2b7"><title>22:00: 0.2% fraud (351 of 194,555 transactions)</title></rect><text x="694.0" y="316" text-anchor="middle" fill="#5f5e5a">22</text><rect x="713.0" y="298.1" width="18" height="1.9" fill="#c3c2b7"><title>23:00: 0.2% fraud (323 of 141,257 transactions)</title></rect><text x="722.0" y="316" text-anchor="middle" fill="#5f5e5a">23</text><text x="218.0" y="110.0" text-anchor="middle" font-weight="600" fill="#1b1b1b">22.3%</text>
+<text x="736" y="336" text-anchor="end" fill="#5f5e5a">Hour of day (step mod 24), all 31 days combined; bar height = labeled fraud / all transactions</text>
+</svg><figcaption>Figure 2. Fraud rate by hour of day · PaySim CSV, 6,362,620 transactions</figcaption></figure>
+<p>The fraud rate spikes overnight because legitimate volume collapses while fraud continues at the same pace. Even at the 05:00 peak, more than three in four transactions are legitimate, so time of day helps but cannot separate fraud on its own.</p>
+<p><strong>Balance patterns</strong> (TRANSFER and CASH_OUT only, 2,770,409 transactions)</p>
+<div class="tw"><table><thead><tr><th>Pattern</th><th>Fraud rate when present</th><th>Fraud rate when absent</th></tr></thead><tbody>
+<tr><td>Amount equals the sender's full balance</td><td>100% (8,018 of 8,018)</td><td>0.007% (195 of 2,762,391)</td></tr>
+<tr><td>Receiver balance is 0 before and after</td><td>70.5% (4,076 of 5,782)</td><td>0.150% (4,137 of 2,764,627)</td></tr>
+<tr><td>Sender balance emptied</td><td>0.674% (8,012 of 1,188,074)</td><td>0.013% (201 of 1,582,335)</td></tr>
+<tr><td>Sender's ledger does not add up</td><td>0.140% (16 of 11,418)</td><td>0.297% (8,197 of 2,758,991)</td></tr>
+</tbody></table></div>
+<p>The first pattern alone identifies 97.6% of all labeled fraud with no false positives. These are descriptive statistics of the dataset, not outputs of any detector.</p>
+
+<h2 id="s7">7. Evaluation</h2>
+<p>Neither rule-based detector is a usable fraud classifier on PaySim. The FinTrace rules never exceed 0.84% precision, and PaySim's own flag catches only 0.19% of fraud. Both are scored against the <code>isFraud</code> labels on all 6,362,620 transactions; nothing is sampled.</p>
+<div class="tw"><table><thead><tr><th>Detector</th><th class="num">Accuracy</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1-score</th><th class="num">Flagged</th></tr></thead><tbody>
+<tr><td>FinTrace rules, threshold 50 (High)</td><td class="num">99.85%</td><td class="num">0.44%</td><td class="num">0.06%</td><td class="num">0.11%</td><td class="num">1,138</td></tr>
+<tr><td>FinTrace rules, threshold 40 (best F1)</td><td class="num">98.61%</td><td class="num">0.29%</td><td class="num">2.80%</td><td class="num">0.52%</td><td class="num">80,668</td></tr>
+<tr><td>FinTrace rules, threshold 25 (Medium)</td><td class="num">63.66%</td><td class="num">0.13%</td><td class="num">36.69%</td><td class="num">0.26%</td><td class="num">2,310,283</td></tr>
+<tr><td>PaySim isFlaggedFraud</td><td class="num">99.87%</td><td class="num">100%</td><td class="num">0.19%</td><td class="num">0.39%</td><td class="num">16</td></tr>
+<tr><td>Baseline: predict "legitimate" for everything</td><td class="num">99.87%</td><td class="num">—</td><td class="num">0%</td><td class="num">0%</td><td class="num">0</td></tr>
+<tr><td>Machine-learning classifier</td><td colspan="5">Not available: the project notebook contains no trained model</td></tr>
+</tbody></table></div>
+<div class="cms">
+<div><p><strong>Confusion matrix: FinTrace rules, threshold 50</strong></p>
+<div class="tw"><table class="cm"><thead><tr><th></th><th>Predicted fraud</th><th>Predicted legitimate</th></tr></thead><tbody>
+<tr><th>Actual fraud</th><td class="ok">5<br><small>true positive</small></td><td class="bad">8,208<br><small>false negative</small></td></tr>
+<tr><th>Actual legitimate</th><td class="bad">1,133<br><small>false positive</small></td><td class="ok">6,353,274<br><small>true negative</small></td></tr>
+</tbody></table></div></div>
+<div><p><strong>Confusion matrix: PaySim isFlaggedFraud</strong></p>
+<div class="tw"><table class="cm"><thead><tr><th></th><th>Predicted fraud</th><th>Predicted legitimate</th></tr></thead><tbody>
+<tr><th>Actual fraud</th><td class="ok">16<br><small>true positive</small></td><td class="bad">8,197<br><small>false negative</small></td></tr>
+<tr><th>Actual legitimate</th><td class="bad">0<br><small>false positive</small></td><td class="ok">6,354,407<br><small>true negative</small></td></tr>
+</tbody></table></div></div>
+</div>
+<figure><svg viewBox="0 0 760 372" role="img" aria-label="Precision and recall by threshold" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="11.5">
+<text x="24" y="30" font-size="15" font-weight="600" fill="#1b1b1b">Raising the threshold cuts recall to 0.06% at 50, and precision never passes 0.85%</text>
+<text x="24" y="52" fill="#5f5e5a">FinTrace behavioral rules on all transactions; best precision 0.84% at threshold 53</text>
+<line x1="64" x2="712" y1="312.0" y2="312.0" stroke="#b8b7ae"/><text x="56" y="316.0" text-anchor="end" fill="#5f5e5a">0%</text><line x1="64" x2="712" y1="257.0" y2="257.0" stroke="#e6e5df"/><text x="56" y="261.0" text-anchor="end" fill="#5f5e5a">25%</text><line x1="64" x2="712" y1="202.0" y2="202.0" stroke="#e6e5df"/><text x="56" y="206.0" text-anchor="end" fill="#5f5e5a">50%</text><line x1="64" x2="712" y1="147.0" y2="147.0" stroke="#e6e5df"/><text x="56" y="151.0" text-anchor="end" fill="#5f5e5a">75%</text><line x1="64" x2="712" y1="92.0" y2="92.0" stroke="#e6e5df"/><text x="56" y="96.0" text-anchor="end" fill="#5f5e5a">100%</text><text x="64.0" y="330" text-anchor="middle" fill="#5f5e5a">0</text><text x="128.8" y="330" text-anchor="middle" fill="#5f5e5a">10</text><text x="193.6" y="330" text-anchor="middle" fill="#5f5e5a">20</text><text x="258.4" y="330" text-anchor="middle" fill="#5f5e5a">30</text><text x="323.2" y="330" text-anchor="middle" fill="#5f5e5a">40</text><text x="388.0" y="330" text-anchor="middle" fill="#5f5e5a">50</text><text x="452.8" y="330" text-anchor="middle" fill="#5f5e5a">60</text><text x="517.6" y="330" text-anchor="middle" fill="#5f5e5a">70</text><text x="582.4" y="330" text-anchor="middle" fill="#5f5e5a">80</text><text x="647.2" y="330" text-anchor="middle" fill="#5f5e5a">90</text><text x="712.0" y="330" text-anchor="middle" fill="#5f5e5a">100</text><line x1="388.0" x2="388.0" y1="92" y2="312" stroke="#6f6e69" stroke-dasharray="4 4"/><text x="394.0" y="104" fill="#5f5e5a">High threshold (50)</text><path d="M64.0 311.7L70.5 311.7L77.0 311.7L83.4 311.7L89.9 311.7L96.4 311.7L102.9 311.7L109.4 311.7L115.8 311.7L122.3 311.7L128.8 311.7L135.3 311.7L141.8 311.7L148.2 311.7L154.7 311.7L161.2 311.7L167.7 311.7L174.2 311.7L180.6 311.7L187.1 311.7L193.6 311.7L200.1 311.7L206.6 311.7L213.0 311.7L219.5 311.7L226.0 311.7L232.5 311.7L239.0 311.7L245.4 311.7L251.9 311.7L258.4 311.6L264.9 311.6L271.4 311.6L277.8 311.6L284.3 311.5L290.8 311.5L297.3 311.5L303.8 311.4L310.2 311.4L316.7 311.4L323.2 311.4L329.7 311.4L336.2 311.4L342.6 311.4L349.1 311.4L355.6 311.3L362.1 311.2L368.6 311.1L375.0 311.3L381.5 311.0L388.0 311.0L394.5 310.8L401.0 310.4L407.4 310.1L413.9 310.1L420.4 312.0L426.9 312.0L433.4 312.0L439.8 312.0L446.3 312.0L452.8 312.0L459.3 312.0L465.8 312.0L472.2 312.0L478.7 312.0L485.2 312.0L491.7 312.0L498.2 312.0L504.6 312.0L511.1 312.0L517.6 312.0L524.1 312.0L530.6 312.0L537.0 312.0L543.5 312.0L550.0 312.0L556.5 312.0L563.0 312.0L569.4 312.0L575.9 312.0L582.4 312.0L588.9 312.0L595.4 312.0L601.8 312.0L608.3 312.0L614.8 312.0L621.3 312.0L627.8 312.0L634.2 312.0L640.7 312.0L647.2 312.0L653.7 312.0L660.2 312.0L666.6 312.0L673.1 312.0L679.6 312.0L686.1 312.0L692.6 312.0L699.0 312.0L705.5 312.0L712.0 312.0" fill="none" stroke="#c3c2b7" stroke-width="2"/><text x="89.9" y="304.0" fill="#1b1b1b">Precision</text><path d="M64.0 92.0L70.5 92.0L77.0 92.0L83.4 92.0L89.9 92.0L96.4 92.0L102.9 92.0L109.4 92.0L115.8 92.0L122.3 92.0L128.8 92.0L135.3 92.0L141.8 92.0L148.2 92.0L154.7 92.0L161.2 92.0L167.7 92.0L174.2 92.0L180.6 92.0L187.1 92.0L193.6 92.0L200.1 229.4L206.6 229.4L213.0 229.6L219.5 230.2L226.0 231.3L232.5 234.0L239.0 237.8L245.4 242.7L251.9 252.2L258.4 255.4L264.9 266.1L271.4 271.2L277.8 281.6L284.3 285.8L290.8 290.3L297.3 297.9L303.8 301.5L310.2 304.4L316.7 305.8L323.2 305.8L329.7 309.3L336.2 309.6L342.6 310.3L349.1 310.3L355.6 311.6L362.1 311.7L368.6 311.7L375.0 311.8L381.5 311.9L388.0 311.9L394.5 311.9L401.0 311.9L407.4 311.9L413.9 311.9L420.4 312.0L426.9 312.0L433.4 312.0L439.8 312.0L446.3 312.0L452.8 312.0L459.3 312.0L465.8 312.0L472.2 312.0L478.7 312.0L485.2 312.0L491.7 312.0L498.2 312.0L504.6 312.0L511.1 312.0L517.6 312.0L524.1 312.0L530.6 312.0L537.0 312.0L543.5 312.0L550.0 312.0L556.5 312.0L563.0 312.0L569.4 312.0L575.9 312.0L582.4 312.0L588.9 312.0L595.4 312.0L601.8 312.0L608.3 312.0L614.8 312.0L621.3 312.0L627.8 312.0L634.2 312.0L640.7 312.0L647.2 312.0L653.7 312.0L660.2 312.0L666.6 312.0L673.1 312.0L679.6 312.0L686.1 312.0L692.6 312.0L699.0 312.0L705.5 312.0L712.0 312.0" fill="none" stroke="#2a78d6" stroke-width="2"/><text x="89.9" y="84.0" font-weight="600" fill="#1b1b1b">Recall</text><text x="208.1" y="221.4" fill="#1b1b1b">37.6% at threshold 21</text><text x="394.0" y="284" fill="#1b1b1b">Recall 0.06%</text><text x="394.0" y="300" fill="#5f5e5a">Precision 0.44%</text>
+<text x="388" y="352" text-anchor="middle" fill="#5f5e5a">Risk threshold (a transaction is flagged when its risk is at or above it)</text>
+</svg><figcaption>Figure 3. Precision and recall by threshold · FinTrace behavioral score evaluated at every threshold 0–100 against isFraud</figcaption></figure>
+<p>Accuracy is misleading here: the do-nothing baseline scores 99.87%, as high as any detector, because 99.87% of transactions are legitimate. Precision, recall and F1 show the real picture. Recall collapses at threshold 21. That is where transactions whose sender and receiver both score exactly 20, typically accounts with almost no history, stop being flagged; 62.4% of the frauds are of this kind.</p>
+
+<h2 id="s8">8. Discussion and limitations</h2>
+<p>The FinTrace rules are built to explain unusual accounts to an investigator, and on PaySim they are weak at classifying transactions. The main reason is the data: 94.8% of accounts appear in only one transaction. Such an account has no history to compare against, so the z-score and IQR signals cannot fire, and the novelty signal gives almost every account the same score of 20. The rules work as designed; PaySim gives them little to work with.</p>
+<p>The dataset itself carries strong transaction-level signals, such as a sender's whole balance moving out in one TRANSFER or CASH_OUT. A trained classifier would likely learn these. The rules do not use them, because they look at accounts rather than at single transactions.</p>
+<p><strong>Limitations</strong></p>
+<ul>
+<li><strong>Hindsight.</strong> As in the notebook, each account is scored on its full 31-day history, so a transaction's risk can reflect later activity. A live system would score only on the past.</li>
+<li><strong>Synthetic data.</strong> PaySim is simulated, and some patterns are artifacts of the simulation. For example, legitimate volume almost stops in the final days while fraud continues. Findings may not carry over to real banking data.</li>
+<li><strong>In-sample evaluation.</strong> The rules have no trained parameters, so testing on the full dataset is fair. However, the "best threshold" figure was chosen on that same data.</li>
+<li><strong>No community detection at full scale.</strong> The notebook's Louvain clustering is not run over all 9 million accounts. The system shows each account's directly connected accounts instead.</li>
+<li><strong>No machine-learning model.</strong> None existed in the project notebook, so no ML results are reported.</li>
+</ul>
+
+<h2 id="s9">9. Conclusion and future work</h2>
+<p>The project met its objectives. FinTrace Fraud Monitor runs the notebook's own scoring on all 6,362,620 PaySim transactions, matches the notebook on every verified account, and answers any lookup in under half a second. It reports its results honestly: the explainable rules suit case investigation but catch only 0.06% of fraud as a classifier, and the system says so instead of hiding it.</p>
+<p><strong>Future work</strong></p>
+<ol>
+<li>Train a supervised classifier (for example, gradient boosting) on transaction-level features, evaluate it on a time-based hold-out set, and connect it through the existing model slot.</li>
+<li>Add transaction-level rules such as "amount equals the sender's full balance", which the analysis shows is a near-perfect fraud signal on PaySim.</li>
+<li>Score accounts using only past activity, so the system could run on a live stream.</li>
+<li>Run community detection on the fraud-touching subgraph to surface rings and mule chains.</li>
+<li>Validate the approach on a real or less synthetic transaction dataset.</li>
+</ol>
+
+<h2 id="refs">References</h2>
+<ol class="refs">
+<li>E. A. Lopez-Rojas, A. Elmir and S. Axelsson, "PaySim: A financial mobile money simulator for fraud detection," in <em>Proc. 28th European Modeling and Simulation Symposium (EMSS)</em>, Larnaca, Cyprus, 2016.</li>
+<li>E. A. Lopez-Rojas, "Synthetic Financial Datasets For Fraud Detection," Kaggle. <a href="https://www.kaggle.com/datasets/ealaxi/paysim1">kaggle.com/datasets/ealaxi/paysim1</a></li>
+<li>M. Raasveldt and H. Mühleisen, "DuckDB: an Embeddable Analytical Database," in <em>Proc. ACM SIGMOD</em>, 2019.</li>
+<li>V. D. Blondel, J.-L. Guillaume, R. Lambiotte and E. Lefebvre, "Fast unfolding of communities in large networks," <em>Journal of Statistical Mechanics</em>, 2008.</li>
+<li>J. W. Tukey, <em>Exploratory Data Analysis</em>. Addison-Wesley, 1977.</li>
+<li>FastAPI documentation. <a href="https://fastapi.tiangolo.com">fastapi.tiangolo.com</a></li>
+<li>Project source code. <a href="https://github.com/rohit87887/fintrace-fraud-monitor">github.com/rohit87887/fintrace-fraud-monitor</a></li>
+</ol>
+
+<footer>CSE4074 · Fall 2026-27 · S Rohit (23MIA1175), Mridula S (23MIA1004), Fedrick Engels (23MIA1082)</footer>
+</main>
+</body>
+</html>

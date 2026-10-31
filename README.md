@@ -23,6 +23,9 @@ The dataset (470 MB) is not included in this repository. Download it from Kaggle
 | Mridula S | 23MIA1004 |
 | Fedrick Engels | 23MIA1082 |
 
+**Project report:** [report/FinTrace_Project_Report.html](report/FinTrace_Project_Report.html)
+(download the file and open it in a browser; it is self-contained and works offline).
+
 ```
 PaySim CSV ──► scripts/build_data.py ──► data/fintrace.duckdb + data/stats.json
                      │ (notebook rules for all 9.07M accounts, in SQL)

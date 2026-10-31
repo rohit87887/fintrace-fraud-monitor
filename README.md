@@ -7,6 +7,22 @@ A fraud monitoring website built on the **real PaySim dataset**
 The dataset (470 MB) is not included in this repository. Download it from Kaggle:
 [Synthetic Financial Datasets For Fraud Detection](https://www.kaggle.com/datasets/ealaxi/paysim1).
 
+## Course project
+
+| | |
+|---|---|
+| **Subject code** | CSE4074 |
+| **Semester** | Fall 2026-27 |
+| **Professor** | Dr. S. Johanan Joysingh |
+
+**Team**
+
+| Name | Register no. |
+|---|---|
+| S Rohit | 23MIA1175 |
+| Mridula S | 23MIA1004 |
+| Fedrick Engels | 23MIA1082 |
+
 ```
 PaySim CSV ──► scripts/build_data.py ──► data/fintrace.duckdb + data/stats.json
                      │ (notebook rules for all 9.07M accounts, in SQL)
